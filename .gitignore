@@ -1,0 +1,34 @@
+# ── Node ──────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Build output ───────────────────────────────
+dist/
+build/
+
+# ── Environment variables ──────────────────────
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# ── Prisma generated ──────────────────────────
+backend/src/generated/
+
+# ── Uploads (user files — non committiamo dati) ─
+backend/uploads/
+
+# ── OS & Editor ───────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ── Docker volumes ─────────────────────────────
+caddy_data/
+caddy_config/
+
+# ── TypeScript incremental ─────────────────────
+*.tsbuildinfo

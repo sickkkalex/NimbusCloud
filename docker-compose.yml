@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cloud_db
+    environment:
+      POSTGRES_USER: cloud_user
+      POSTGRES_PASSWORD: cloud_password
+      POSTGRES_DB: cloud_storage
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cloud_network
+
+  backend:
+    build: ./backend
+    container_name: cloud_backend
+    environment:
+      DATABASE_URL: "postgresql://cloud_user:cloud_password@postgres:5432/cloud_storage?schema=public"
+      JWT_SECRET: "un_segreto_veramente_lungo_e_sicuro_da_produzione_fratm"
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - cloud_network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: cloud_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    networks:
+      - cloud_network
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  cloud_network:
+    driver: bridge

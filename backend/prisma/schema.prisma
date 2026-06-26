@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  firstName         String?
+  lastName          String?
+  dateOfBirth       DateTime?
+  avatarPath        String?
+  files             File[]
+  folders           Folder[]
+  chatMessages      ChatMessage[]
+  passwordResetOtps PasswordResetOtp[]
+}
+
+model PasswordResetOtp {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  isFromDev Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  parentId  String?
+  parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderTree")
+  files     File[]
+  createdAt DateTime @default(now())
+}
+
+model File {
+  id         String   @id @default(uuid())
+  name       String
+  systemPath String
+  size       Int
+  mimeType   String
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id])
+  folderId   String?
+  folder     Folder?  @relation(fields: [folderId], references: [id])
+  createdAt  DateTime @default(now())
+  shares     Share[]
+}
+
+model Share {
+  id         String    @id @default(uuid())
+  token      String    @unique @default(uuid())
+  fileId     String
+  file       File      @relation(fields: [fileId], references: [id])
+  permission String    @default("READ")
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+}

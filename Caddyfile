@@ -1,0 +1,15 @@
+localhost {
+    # Gira il traffico al container del backend
+    reverse_proxy backend:5000
+
+    request_body {
+        max_size 500MB
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
