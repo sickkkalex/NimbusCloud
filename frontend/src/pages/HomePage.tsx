@@ -8,6 +8,7 @@ import {
 import Navbar from '../components/Navbar'
 import DeveloperChat from '../components/DeveloperChat'
 import FileViewer from '../components/FileViewer'
+import Footer from '../components/Footer'
 import { listFiles, downloadFile, formatFileSize, getFileCategory, type CloudFile } from '../api/files'
 
 const getIconConfig = (mimeType: string) => {
@@ -363,6 +364,7 @@ export default function HomePage() {
           </motion.div>
         )}
       </main>
+      <Footer />
       <DeveloperChat />
     </div>
   )

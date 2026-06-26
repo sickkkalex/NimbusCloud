@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/logo.png" alt="NimbusCloud Logo" width="100" />
+<img src="frontend/public/logo-white.png" alt="NimbusCloud Logo" width="100" />
 
 # NimbusCloud
 

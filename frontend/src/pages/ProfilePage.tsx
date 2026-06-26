@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import UserAvatar from '../components/UserAvatar'
+import Footer from '../components/Footer'
 import { useAuthStore, getDisplayName } from '../store/authStore'
 import { getProfile, updateProfile, uploadAvatar } from '../api/user'
 
@@ -197,6 +198,7 @@ export default function ProfilePage() {
           </div>
         </motion.div>
       </main>
+      <Footer />
     </div>
   )
 }

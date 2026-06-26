@@ -4,6 +4,7 @@ import { Cloud, Files, HardDrive, TrendingUp, RefreshCw } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import UploadZone from '../components/UploadZone'
 import FileCard from '../components/FileCard'
+import Footer from '../components/Footer'
 import { listFiles, formatFileSize, type CloudFile } from '../api/files'
 
 export default function DashboardPage() {
@@ -212,6 +213,7 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </main>
+      <Footer />
     </div>
   )
 }

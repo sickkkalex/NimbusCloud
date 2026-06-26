@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import FileViewer from '../components/FileViewer'
+import Footer from '../components/Footer'
 import { listFiles, updateFile, deleteFile, downloadFile, formatFileSize, type CloudFile } from '../api/files'
 import { listFolders, createFolder, renameFolder, deleteFolder, type CloudFolder } from '../api/folders'
 import { useClipboardStore } from '../store/clipboardStore'
@@ -407,6 +408,7 @@ export default function FilesPage() {
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

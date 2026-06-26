@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useParams } from 'react-router-dom'
 import { Cloud, Download, AlertTriangle, FileIcon, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import Footer from '../components/Footer'
 
 export default function SharedDownloadPage() {
   const { token } = useParams<{ token: string }>()
@@ -92,9 +93,7 @@ export default function SharedDownloadPage() {
         </motion.div>
       </main>
 
-      <footer className="text-center py-6 text-sm text-gray-300">
-        © 2025 NimbusCloud
-      </footer>
+      <Footer />
     </div>
   )
 }
