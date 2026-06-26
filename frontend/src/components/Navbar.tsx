@@ -4,15 +4,17 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   Home, Upload, FolderOpen, User,
   LogOut, Settings, ChevronDown, Bell, X,
+  Star, Trash2
 } from 'lucide-react'
 import { useAuthStore, getDisplayName } from '../store/authStore'
 import UserAvatar from './UserAvatar'
 
 const navItems = [
   { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/upload', label: 'Carica', icon: Upload, end: false },
   { to: '/files', label: 'File', icon: FolderOpen, end: false },
-  { to: '/profile', label: 'Profilo', icon: User, end: false },
+  { to: '/upload', label: 'Carica', icon: Upload, end: false },
+  { to: '/starred', label: 'Preferiti', icon: Star, end: false },
+  { to: '/trash', label: 'Cestino', icon: Trash2, end: false },
 ]
 
 export default function Navbar() {
@@ -55,8 +57,8 @@ export default function Navbar() {
             </NavLink>
 
             {/* Nav links */}
-            <nav className="flex items-center gap-1 flex-1">
-              {navItems.slice(0, 3).map(({ to, label, icon: Icon, end }) => (
+            <nav className="flex items-center gap-1 flex-1 overflow-x-auto no-scrollbar">
+              {navItems.map(({ to, label, icon: Icon, end }) => (
                 <NavLink
                   key={to}
                   to={to}

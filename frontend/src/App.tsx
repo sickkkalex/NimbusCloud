@@ -9,6 +9,8 @@ import HomePage from './pages/HomePage'
 import UploadPage from './pages/UploadPage'
 import FilesPage from './pages/FilesPage'
 import ProfilePage from './pages/ProfilePage'
+import TrashPage from './pages/TrashPage'
+import StarredPage from './pages/StarredPage'
 import SharedDownloadPage from './pages/SharedDownloadPage'
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -61,6 +63,8 @@ export default function App() {
             <Route path="/" element={<Protected><HomePage /></Protected>} />
             <Route path="/upload" element={<Protected><UploadPage /></Protected>} />
             <Route path="/files" element={<Protected><FilesPage /></Protected>} />
+            <Route path="/trash" element={<Protected><TrashPage /></Protected>} />
+            <Route path="/starred" element={<Protected><StarredPage /></Protected>} />
             <Route path="/profile" element={<Protected><ProfilePage /></Protected>} />
             <Route path="/share/:token" element={<SharedDownloadPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

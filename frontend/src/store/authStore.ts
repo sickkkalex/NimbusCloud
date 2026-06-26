@@ -7,6 +7,7 @@ export interface User {
   lastName?: string | null
   dateOfBirth?: string | null
   hasAvatar?: boolean
+  plan?: string
 }
 
 interface AuthState {

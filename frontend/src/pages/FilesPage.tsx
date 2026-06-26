@@ -5,14 +5,15 @@ import {
   Image, Film, Music, FileText, Archive, Code,
   MoreVertical, Pencil, Trash2, Download, Eye,
   Scissors, Copy, ClipboardPaste, RefreshCw, Check, X,
-  ChevronRight, Home, Search,
+  ChevronRight, Home, Search, Star
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import FileViewer from '../components/FileViewer'
 import Footer from '../components/Footer'
-import { listFiles, updateFile, deleteFile, downloadFile, formatFileSize, type CloudFile } from '../api/files'
-import { listFolders, createFolder, renameFolder, deleteFolder, type CloudFolder } from '../api/folders'
+import { listFiles, updateFile, deleteFile, downloadFile, toggleStarFile, formatFileSize, type CloudFile } from '../api/files'
+import { listFolders, createFolder, renameFolder, deleteFolder, toggleStarFolder, type CloudFolder } from '../api/folders'
 import { useClipboardStore } from '../store/clipboardStore'
+import ThumbnailImage from '../components/ThumbnailImage'
 
 const getIcon = (mime: string) => {
   if (mime.startsWith('image/')) return { Icon: Image, color: 'text-violet-500', bg: 'bg-violet-50' }
@@ -110,6 +111,12 @@ export default function FilesPage() {
     cbClear(); load()
   }
 
+  const handleToggleStar = async (item: CloudFile | CloudFolder, type: 'file' | 'folder') => {
+    if (type === 'file') await toggleStarFile(item.id)
+    else await toggleStarFolder(item.id)
+    load()
+  }
+
   const handleDownload = async (f: CloudFile) => {
     setDownloading(f.id); try { await downloadFile(f.id, f.name) } finally { setDownloading(null) }
   }
@@ -154,6 +161,9 @@ export default function FilesPage() {
                   <Scissors className="w-4 h-4 text-gray-400" /> Taglia
                 </button>
                 <div className="context-menu-separator" />
+                <button className="context-menu-item" onClick={() => { handleToggleStar(ctxMenu.file!, 'file'); setCtxMenu(null) }}>
+                  <Star className={`w-4 h-4 ${ctxMenu.file!.isStarred ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}`} /> {ctxMenu.file!.isStarred ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                </button>
                 <button className="context-menu-item" onClick={() => { setRenaming({ id: ctxMenu.file!.id, type: 'file', name: ctxMenu.file!.name }); setCtxMenu(null) }}>
                   <Pencil className="w-4 h-4 text-gray-400" /> Rinomina
                 </button>
@@ -168,6 +178,9 @@ export default function FilesPage() {
                   <FolderOpen className="w-4 h-4 text-gray-400" /> Apri
                 </button>
                 <div className="context-menu-separator" />
+                <button className="context-menu-item" onClick={() => { handleToggleStar(ctxMenu.folder!, 'folder'); setCtxMenu(null) }}>
+                  <Star className={`w-4 h-4 ${ctxMenu.folder!.isStarred ? 'fill-amber-400 text-amber-400' : 'text-gray-400'}`} /> {ctxMenu.folder!.isStarred ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                </button>
                 <button className="context-menu-item" onClick={() => { setRenaming({ id: ctxMenu.folder!.id, type: 'folder', name: ctxMenu.folder!.name }); setCtxMenu(null) }}>
                   <Pencil className="w-4 h-4 text-gray-400" /> Rinomina
                 </button>
@@ -323,8 +336,13 @@ export default function FilesPage() {
                           className="card p-4 cursor-pointer group"
                           onDoubleClick={() => setCurrentFolderId(folder.id)}
                         >
-                          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform relative">
                             <Folder className="w-7 h-7 text-amber-400" strokeWidth={1.5} />
+                            {folder.isStarred && (
+                              <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              </div>
+                            )}
                           </div>
                           {renaming?.id === folder.id ? (
                             <input
@@ -368,8 +386,17 @@ export default function FilesPage() {
                             className="card p-4 cursor-pointer group relative"
                             onClick={() => setViewerFile(file)}
                           >
-                            <div className={`w-12 h-12 ${bg} rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
-                              <Icon className={`w-6 h-6 ${color}`} strokeWidth={1.5} />
+                            <div className={`w-12 h-12 ${bg} rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform relative overflow-hidden`}>
+                              {file.thumbnailPath ? (
+                                <ThumbnailImage fileId={file.id} alt={file.name} className="w-full h-full" />
+                              ) : (
+                                <Icon className={`w-6 h-6 ${color}`} strokeWidth={1.5} />
+                              )}
+                              {file.isStarred && (
+                                <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
+                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                </div>
+                              )}
                             </div>
 
                             {renaming?.id === file.id ? (

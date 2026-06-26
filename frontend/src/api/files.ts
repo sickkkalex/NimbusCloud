@@ -10,6 +10,10 @@ export interface CloudFile {
   folderId: string | null
   folder?: { id: string; name: string } | null
   createdAt: string
+  isDeleted?: boolean
+  isStarred?: boolean
+  deletedAt?: string | null
+  thumbnailPath?: string | null
 }
 
 export interface ShareResponse {
@@ -23,23 +27,54 @@ export const listFiles = async (): Promise<CloudFile[]> => {
   return data
 }
 
+const CHUNK_SIZE = 2 * 1024 * 1024 // 2MB per chunk per maggiore stabilità
+
 export const uploadFile = async (
   file: File,
   folderId?: string | null,
   onProgress?: (percent: number) => void
 ): Promise<{ message: string; file: CloudFile }> => {
-  const formData = new FormData()
-  formData.append('file', file)
-  if (folderId) formData.append('folderId', folderId)
+  const uploadId = `${file.name}-${Date.now()}-${Math.random().toString(36).substring(7)}`
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
 
-  const { data } = await apiClient.post('/files/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: (event) => {
-      if (onProgress && event.total) {
-        onProgress(Math.round((event.loaded * 100) / event.total))
-      }
-    },
+  if (totalChunks === 0) {
+    // File vuoto
+    throw new Error('File vuoto non supportato')
+  }
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE
+    const end = Math.min(start + CHUNK_SIZE, file.size)
+    const chunk = file.slice(start, end)
+
+    const formData = new FormData()
+    formData.append('chunk', chunk)
+    formData.append('uploadId', uploadId)
+    formData.append('chunkIndex', String(i))
+
+    await apiClient.post('/files/upload/chunk', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (event) => {
+        if (onProgress && event.total) {
+          const chunkProgress = event.loaded / event.total
+          const overallProgress = Math.round(((i + chunkProgress) / totalChunks) * 100)
+          onProgress(overallProgress)
+        }
+      },
+    })
+  }
+
+  // Completa upload
+  const { data } = await apiClient.post('/files/upload/complete', {
+    uploadId,
+    filename: file.name,
+    mimeType: file.type,
+    size: file.size,
+    totalChunks,
+    folderId
   })
+
+  if (onProgress) onProgress(100)
   return data
 }
 
@@ -55,7 +90,21 @@ export const deleteFile = async (id: string): Promise<void> => {
   await apiClient.delete(`/files/${id}`)
 }
 
+export const hardDeleteFile = async (id: string): Promise<void> => {
+  await apiClient.delete(`/files/${id}/permanent`)
+}
+
+export const restoreFile = async (id: string): Promise<void> => {
+  await apiClient.post(`/files/${id}/restore`)
+}
+
+export const toggleStarFile = async (id: string): Promise<{ file: CloudFile }> => {
+  const { data } = await apiClient.post(`/files/${id}/star`)
+  return data
+}
+
 export const streamFileUrl = (id: string): string => `/api/files/${id}/stream`
+export const getThumbnailUrl = (id: string): string => `/api/files/${id}/thumbnail`
 
 export const downloadFile = async (id: string, filename: string): Promise<void> => {
   const token = localStorage.getItem('nimbus_token')

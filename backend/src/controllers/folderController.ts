@@ -36,7 +36,7 @@ export const getFolders = async (req: AuthenticatedRequest, res: Response): Prom
         const userId = req.user?.id;
 
         const folders = await prisma.folder.findMany({
-            where: { ownerId: userId },
+            where: { ownerId: userId, isDeleted: false },
             orderBy: { createdAt: 'asc' },
             include: {
                 children: { orderBy: { createdAt: 'asc' } },
@@ -78,7 +78,7 @@ export const updateFolder = async (req: AuthenticatedRequest, res: Response): Pr
     }
 };
 
-// 4. ELIMINA CARTELLA (sposta i file nella root)
+// 4. ELIMINA CARTELLA (SOFT DELETE)
 export const deleteFolder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const id = String(req.params.id);
@@ -90,7 +90,31 @@ export const deleteFolder = async (req: AuthenticatedRequest, res: Response): Pr
             return;
         }
 
-        // Sposta i file in root
+        await prisma.folder.update({
+            where: { id },
+            data: { isDeleted: true, deletedAt: new Date() }
+        });
+
+        res.json({ message: 'Cartella spostata nel cestino.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Errore durante l\'eliminazione della cartella.' });
+    }
+};
+
+// 4.1 HARD DELETE CARTELLA
+export const hardDeleteFolder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const id = String(req.params.id);
+        const userId = req.user?.id;
+
+        const folder = await prisma.folder.findFirst({ where: { id, ownerId: userId } });
+        if (!folder) {
+            res.status(404).json({ error: 'Cartella non trovata.' });
+            return;
+        }
+
+        // Sposta i file in root (oppure eliminali se si vuole svuotare il cestino completamente)
         await prisma.file.updateMany({
             where: { folderId: id, ownerId: userId },
             data: { folderId: null },
@@ -104,9 +128,57 @@ export const deleteFolder = async (req: AuthenticatedRequest, res: Response): Pr
 
         await prisma.folder.delete({ where: { id } });
 
-        res.json({ message: 'Cartella eliminata. I file sono stati spostati nella root.' });
+        res.json({ message: 'Cartella eliminata permanentemente. I file sono stati spostati nella root.' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Errore durante l\'eliminazione della cartella.' });
+        res.status(500).json({ error: 'Errore durante l\'eliminazione permanente della cartella.' });
+    }
+};
+
+// 4.2 RIPRISTINA CARTELLA
+export const restoreFolder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const id = String(req.params.id);
+        const userId = req.user?.id;
+
+        const folder = await prisma.folder.findFirst({ where: { id, ownerId: userId } });
+        if (!folder) {
+            res.status(404).json({ error: 'Cartella non trovata.' });
+            return;
+        }
+
+        await prisma.folder.update({
+            where: { id },
+            data: { isDeleted: false, deletedAt: null }
+        });
+
+        res.json({ message: 'Cartella ripristinata.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Errore durante il ripristino della cartella.' });
+    }
+};
+
+// 4.3 TOGGLE PREFERITI CARTELLA
+export const toggleStarFolder = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const id = String(req.params.id);
+        const userId = req.user?.id;
+
+        const folder = await prisma.folder.findFirst({ where: { id, ownerId: userId } });
+        if (!folder) {
+            res.status(404).json({ error: 'Cartella non trovata.' });
+            return;
+        }
+
+        const updated = await prisma.folder.update({
+            where: { id },
+            data: { isStarred: !folder.isStarred }
+        });
+
+        res.json({ message: updated.isStarred ? 'Cartella aggiunta ai preferiti.' : 'Cartella rimossa dai preferiti.', folder: updated });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Errore durante l\'aggiornamento dei preferiti.' });
     }
 };

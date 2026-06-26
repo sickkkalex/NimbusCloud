@@ -14,6 +14,7 @@ const toProfile = (user: {
     lastName: string | null;
     dateOfBirth: Date | null;
     avatarPath: string | null;
+    plan: string;
 }) => ({
     id: user.id,
     email: user.email,
@@ -21,6 +22,7 @@ const toProfile = (user: {
     lastName: user.lastName,
     dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : null,
     hasAvatar: Boolean(user.avatarPath),
+    plan: user.plan,
 });
 
 export const getProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -122,5 +124,27 @@ export const getAvatar = async (req: AuthenticatedRequest, res: Response): Promi
         res.sendFile(filePath);
     } catch {
         res.status(500).json({ error: 'Errore nel recupero dell\'avatar.' });
+    }
+};
+
+export const upgradePlan = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const { coupon } = req.body;
+        if (coupon !== "NIMBUSCLOUDGRATIS") {
+            res.status(400).json({ error: 'Coupon non valido.' });
+            return;
+        }
+
+        const user = await prisma.user.update({
+            where: { id: req.user!.id },
+            data: {
+                plan: "PREMIUM",
+                storageQuota: 53687091200 // 50 GB in bytes
+            }
+        });
+
+        res.json({ message: 'Piano aggiornato con successo!', user: toProfile(user) });
+    } catch {
+        res.status(500).json({ error: 'Errore durante l\'aggiornamento del piano.' });
     }
 };

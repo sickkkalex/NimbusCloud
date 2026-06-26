@@ -4,6 +4,8 @@ import {
   X, Download, ZoomIn, ZoomOut, RotateCw,
   ChevronLeft, ChevronRight, Maximize2, FileText,
 } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { type CloudFile, downloadFile, formatFileSize } from '../api/files'
 
 interface FileViewerProps {
@@ -148,11 +150,30 @@ export default function FileViewer({ file, files = [], onClose, onNavigate }: Fi
     }
 
     if (textContent !== null) {
+      // Determina il linguaggio in base all'estensione o MIME
+      const getLanguage = () => {
+        const ext = file.name.split('.').pop()?.toLowerCase()
+        if (ext === 'js' || ext === 'jsx') return 'javascript'
+        if (ext === 'ts' || ext === 'tsx') return 'typescript'
+        if (ext === 'py') return 'python'
+        if (ext === 'html') return 'html'
+        if (ext === 'css') return 'css'
+        if (ext === 'json') return 'json'
+        if (ext === 'md') return 'markdown'
+        if (ext === 'sh') return 'bash'
+        return 'text'
+      }
+
       return (
-        <div className="w-full h-full overflow-auto p-6">
-          <pre className="text-gray-200 text-sm font-mono whitespace-pre-wrap break-words leading-relaxed">
+        <div className="w-full h-full overflow-auto rounded-xl">
+          <SyntaxHighlighter
+            language={getLanguage()}
+            style={vscDarkPlus}
+            customStyle={{ margin: 0, minHeight: '100%', fontSize: '14px', borderRadius: '0.75rem' }}
+            showLineNumbers={true}
+          >
             {textContent}
-          </pre>
+          </SyntaxHighlighter>
         </div>
       )
     }

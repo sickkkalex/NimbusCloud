@@ -9,6 +9,7 @@ import chatRoutes from './routes/chatRoutes';
 import fileRoutes from './routes/fileRoutes';
 import shareRoutes from './routes/shareRoutes';
 import folderRoutes from './routes/folderRoutes';
+import searchRoutes from './routes/searchRoutes';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/shares', shareRoutes);
 app.use('/api/folders', folderRoutes);
+app.use('/api/search', searchRoutes);
 
 app.get('/', (req, res) => {
     res.send('NimbusCloud Backend — attivo!');

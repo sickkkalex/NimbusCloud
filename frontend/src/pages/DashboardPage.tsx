@@ -6,12 +6,14 @@ import UploadZone from '../components/UploadZone'
 import FileCard from '../components/FileCard'
 import Footer from '../components/Footer'
 import { listFiles, formatFileSize, type CloudFile } from '../api/files'
+import { getStorageStats, type StorageStats } from '../api/search'
 
 export default function DashboardPage() {
   const [files, setFiles] = useState<CloudFile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [storageStats, setStorageStats] = useState<StorageStats | null>(null)
 
   const fetchFiles = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -19,8 +21,12 @@ export default function DashboardPage() {
     setError(null)
 
     try {
-      const data = await listFiles()
-      setFiles(data)
+      const [filesData, statsData] = await Promise.all([
+        listFiles(),
+        getStorageStats()
+      ])
+      setFiles(filesData)
+      setStorageStats(statsData)
     } catch {
       setError('Impossibile caricare i file. Verifica la connessione al server.')
     } finally {
@@ -51,7 +57,9 @@ export default function DashboardPage() {
     {
       id: 'stat-size',
       label: 'Spazio usato',
-      value: formatFileSize(totalSize),
+      value: storageStats 
+        ? `${formatFileSize(storageStats.totalUsed)} / ${formatFileSize(Number(storageStats.storageQuota))}` 
+        : formatFileSize(totalSize),
       icon: HardDrive,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
@@ -114,6 +122,45 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Progress Bar Storage */}
+        {storageStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.18 }}
+            className="mb-8 card p-5 sm:p-6"
+          >
+            <div className="flex justify-between items-end mb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">Spazio di archiviazione</h3>
+                <p className="text-sm text-gray-500">
+                  {formatFileSize(storageStats.totalUsed)} usati su {formatFileSize(Number(storageStats.storageQuota))}
+                </p>
+              </div>
+              <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                {Math.round((storageStats.totalUsed / Number(storageStats.storageQuota)) * 100)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 mb-4 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${Math.min(100, (storageStats.totalUsed / Number(storageStats.storageQuota)) * 100)}%` }}
+              ></div>
+            </div>
+            
+            <div className="flex flex-wrap gap-4 text-xs font-medium">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-gray-600">Immagini: {formatFileSize(storageStats.details.images)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
+                <span className="text-gray-600">Video: {formatFileSize(storageStats.details.videos)}</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Upload section */}
         <motion.div

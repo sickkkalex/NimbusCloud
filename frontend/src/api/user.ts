@@ -7,6 +7,7 @@ export interface UserProfile {
   lastName: string | null
   dateOfBirth: string | null
   hasAvatar: boolean
+  plan: string
 }
 
 export const getProfile = async (): Promise<UserProfile> => {
@@ -35,4 +36,9 @@ export const uploadAvatar = async (file: File): Promise<UserProfile> => {
 export const getAvatarUrl = (): string => {
   const token = localStorage.getItem('nimbus_token')
   return `/api/users/me/avatar?token=${token}&t=${Date.now()}`
+}
+
+export const upgradePlan = async (coupon: string): Promise<{ message: string, user: UserProfile }> => {
+  const { data } = await apiClient.post<{ message: string, user: UserProfile }>('/users/upgrade', { coupon })
+  return data
 }

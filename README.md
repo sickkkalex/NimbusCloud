@@ -34,12 +34,17 @@
 | 🔐 **Autenticazione JWT** | Login, registrazione e sessioni sicure con token JWT (7 giorni) |
 | 🔑 **Reset password via OTP** | Codice OTP inviato via email con scadenza di 15 minuti |
 | 👤 **Profilo personalizzabile** | Nome, cognome, data di nascita e foto profilo caricabile |
-| 📁 **Gestione file avanzata** | Upload, anteprima, download, rinomina, elimina |
+| 📁 **Gestione file avanzata** | Upload, anteprima, download, rinomina, elimina, cestino (soft delete) |
 | 🗂️ **Cartelle nidificate** | Struttura ad albero infinita con drag-and-drop (cut/copy/paste) |
+| ⭐ **Preferiti & Cestino** | Aggiungi file/cartelle ai preferiti e ripristina file dal cestino |
+| 🖼️ **Miniature Automatiche** | Generazione automatica di thumbnail per immagini caricate |
+| 📄 **Syntax Highlighting** | Visualizzatore di codice integrato con formattazione automatica |
 | 🔗 **Link di condivisione** | Genera URL pubblici con scadenza opzionale |
 | 💬 **Chat di supporto** | Comunicazione real-time tra utente e sviluppatore |
-| 📱 **Mobile-first** | Design responsive con bottom navigation nativa su mobile |
+| 📱 **Mobile-first & PWA** | Design responsive nativo e installabile come app PWA |
 | 🌓 **Streaming file** | Anteprima di immagini, video e audio direttamente nel browser |
+| 📦 **Chunked Uploads** | Supporto per caricamenti di file enormi a blocchi |
+| 💳 **Piani e Quota Storage** | Limiti di storage personalizzati (Free: 1GB, Premium: 50GB) |
 
 ---
 
@@ -274,13 +279,13 @@ ip route get 1.1.1.1 | awk '{print $7}'
 
 ## 🗺️ Roadmap
 
-- [ ] Drag & drop upload con progress bar
+- [x] PWA (installabile come app su Android/iOS)
+- [x] Quota storage per utente
+- [ ] Drag & drop upload con progress bar avanzata
 - [ ] Condivisione con password e scadenza personalizzata
 - [ ] Tema scuro (dark mode)
 - [ ] Notifiche push
 - [ ] Anteprima PDF nel browser
-- [ ] PWA (installabile come app su Android/iOS)
-- [ ] Quota storage per utente
 - [ ] 2FA (autenticazione a due fattori)
 
 ---

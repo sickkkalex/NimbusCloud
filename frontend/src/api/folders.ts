@@ -8,6 +8,9 @@ export interface CloudFolder {
   createdAt: string
   children?: CloudFolder[]
   _count?: { files: number }
+  isDeleted?: boolean
+  isStarred?: boolean
+  deletedAt?: string | null
 }
 
 export const listFolders = async (): Promise<CloudFolder[]> => {
@@ -27,6 +30,19 @@ export const renameFolder = async (id: string, name: string): Promise<{ folder: 
 
 export const deleteFolder = async (id: string): Promise<void> => {
   await apiClient.delete(`/folders/${id}`)
+}
+
+export const hardDeleteFolder = async (id: string): Promise<void> => {
+  await apiClient.delete(`/folders/${id}/permanent`)
+}
+
+export const restoreFolder = async (id: string): Promise<void> => {
+  await apiClient.post(`/folders/${id}/restore`)
+}
+
+export const toggleStarFolder = async (id: string): Promise<{ folder: CloudFolder }> => {
+  const { data } = await apiClient.post(`/folders/${id}/star`)
+  return data
 }
 
 export const moveFolder = async (id: string, parentId: string | null): Promise<{ folder: CloudFolder }> => {

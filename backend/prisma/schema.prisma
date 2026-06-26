@@ -18,6 +18,8 @@ model User {
   lastName          String?
   dateOfBirth       DateTime?
   avatarPath        String?
+  plan              String             @default("FREE")
+  storageQuota      BigInt             @default(1073741824) // 1 GB in bytes
   files             File[]
   folders           Folder[]
   chatMessages      ChatMessage[]
@@ -52,6 +54,10 @@ model Folder {
   parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id])
   children  Folder[] @relation("FolderTree")
   files     File[]
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
+  isStarred Boolean  @default(false)
+  isFileDrop Boolean @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -65,6 +71,10 @@ model File {
   owner      User     @relation(fields: [ownerId], references: [id])
   folderId   String?
   folder     Folder?  @relation(fields: [folderId], references: [id])
+  isDeleted  Boolean  @default(false)
+  deletedAt  DateTime?
+  isStarred  Boolean  @default(false)
+  thumbnailPath String?
   createdAt  DateTime @default(now())
   shares     Share[]
 }

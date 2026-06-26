@@ -8,7 +8,8 @@ import Navbar from '../components/Navbar'
 import UserAvatar from '../components/UserAvatar'
 import Footer from '../components/Footer'
 import { useAuthStore, getDisplayName } from '../store/authStore'
-import { getProfile, updateProfile, uploadAvatar } from '../api/user'
+import { getProfile, updateProfile, uploadAvatar, upgradePlan } from '../api/user'
+import { formatFileSize } from '../api/files'
 
 export default function ProfilePage() {
   const { user, logout, updateUser } = useAuthStore()
@@ -24,13 +25,18 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null)
   const [avatarKey, setAvatarKey] = useState(0)
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [coupon, setCoupon] = useState('')
+  const [upgrading, setUpgrading] = useState(false)
+  const [upgradeError, setUpgradeError] = useState<string | null>(null)
+
   useEffect(() => {
     getProfile().then((profile) => {
       updateUser(profile)
       setFirstName(profile.firstName ?? '')
       setLastName(profile.lastName ?? '')
       setDateOfBirth(profile.dateOfBirth ?? '')
-    }).catch(() => {})
+    }).catch(() => { })
   }, [updateUser])
 
   const handleLogout = () => { logout(); navigate('/login') }
@@ -69,6 +75,22 @@ export default function ProfilePage() {
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleUpgrade = async () => {
+    if (!coupon.trim()) return
+    setUpgrading(true)
+    setUpgradeError(null)
+    try {
+      const res = await upgradePlan(coupon.trim())
+      updateUser(res.user)
+      setShowUpgradeModal(false)
+      setCoupon('')
+    } catch (err: any) {
+      setUpgradeError(err?.response?.data?.error || 'Codice coupon non valido.')
+    } finally {
+      setUpgrading(false)
     }
   }
 
@@ -170,22 +192,37 @@ export default function ProfilePage() {
           </div>
 
           <div className="card p-6 mb-6">
-            <h3 className="text-base font-semibold text-gray-800 mb-4">Informazioni account</h3>
+            <h3 className="text-base font-semibold text-gray-800 mb-4">Piano e Storage</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { icon: Mail, label: 'Email', value: user?.email ?? '—' },
-                { icon: HardDrive, label: 'Storage', value: 'Illimitato' },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
-                  <div className="w-9 h-9 bg-nimbus-100 rounded-xl flex items-center justify-center">
-                    <Icon className="w-[18px] h-[18px] text-nimbus-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-medium">{label}</p>
-                    <p className="text-sm font-semibold text-gray-800">{value}</p>
-                  </div>
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
+                <div className="w-9 h-9 bg-nimbus-100 rounded-xl flex items-center justify-center">
+                  <Mail className="w-[18px] h-[18px] text-nimbus-600" />
                 </div>
-              ))}
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 font-medium">Email</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">{user?.email ?? '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl relative overflow-hidden">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${user?.plan === 'PREMIUM' ? 'bg-amber-100' : 'bg-gray-200'}`}>
+                  <HardDrive className={`w-[18px] h-[18px] ${user?.plan === 'PREMIUM' ? 'text-amber-600' : 'text-gray-500'}`} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-gray-400 font-medium">Piano Attuale</p>
+                  <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    {user?.plan === 'PREMIUM' ? 'Premium 👑 (50GB)' : 'Free (1GB)'}
+                  </p>
+                </div>
+                {user?.plan !== 'PREMIUM' && (
+                  <button
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="absolute right-4 text-xs font-semibold text-nimbus-600 hover:text-nimbus-700 bg-nimbus-50 px-2 py-1 rounded-lg"
+                  >
+                    Passa a Premium
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -198,6 +235,69 @@ export default function ProfilePage() {
           </div>
         </motion.div>
       </main>
+
+      {/* Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => !upgrading && setShowUpgradeModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 w-full max-w-md"
+            >
+              <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 text-amber-500">
+                <HardDrive className="w-7 h-7" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Passa a Premium 👑</h2>
+              <p className="text-gray-500 mb-6 text-sm">
+                Ottieni <b>50GB</b> di spazio cloud a soli 3.99€ al mese. Per un periodo limitato, puoi attivare il piano Premium gratuitamente utilizzando un coupon promozionale.
+              </p>
+
+              {upgradeError && (
+                <div className="mb-4 px-4 py-3 bg-red-50 text-red-600 text-sm rounded-xl font-medium">
+                  {upgradeError}
+                </div>
+              )}
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Codice Coupon</label>
+                <input
+                  type="text"
+                  value={coupon}
+                  onChange={e => setCoupon(e.target.value.toUpperCase())}
+                  placeholder="Inserisci Codice"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-nimbus-500 focus:ring-4 focus:ring-nimbus-500/10 transition-all font-mono uppercase"
+                  disabled={upgrading}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  disabled={upgrading}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Annulla
+                </button>
+                <button
+                  onClick={handleUpgrade}
+                  disabled={upgrading || !coupon.trim()}
+                  className="flex-[2] px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all flex items-center justify-center gap-2"
+                >
+                  {upgrading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Riscatta e Attiva'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <Footer />
     </div>
   )
